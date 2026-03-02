@@ -1,4 +1,30 @@
 import { provider } from "@/lib/market";
-import { atr14, ema, sma } from "@/lib/indicators";
-import { Timeframe } from "@/lib/types";
-export async function GET(req:Request){ const u=new URL(req.url); const ticker=u.searchParams.get("ticker"); const tf=(u.searchParams.get("tf") as Timeframe) ?? "D1"; if(!ticker)return Response.json({error:"ticker required"},{status:400}); const o=await provider.ohlc(ticker,tf); if(!o.length) return Response.json({message:"Data unavailable"}); const closes=o.map(x=>x.close); return Response.json({sma50:sma(closes,50),sma200:sma(closes,200),ema20:ema(closes,20),atr14:atr14(o)}); }
+import { fundamentalsScore } from "@/lib/scoring";
+
+export async function GET(req: Request) {
+  const ticker = new URL(req.url).searchParams.get("ticker");
+
+  if (!ticker) {
+    return Response.json({ error: "ticker required" }, { status: 400 });
+  }
+
+  const raw = await provider.fundamentals(ticker);
+
+  if (!raw || !Object.keys(raw).length) {
+    return Response.json({ message: "Data unavailable" });
+  }
+
+  // Normalize undefined -> null (Vercel build fails on undefined for number|null types)
+  const metrics = {
+    revenueYoY: raw.revenueYoY ?? null,
+    revenue3Y: raw.revenue3Y ?? null,
+    epsYoY: raw.epsYoY ?? null,
+    eps3Y: raw.eps3Y ?? null,
+    grossMargin: raw.grossMargin ?? null,
+    netMargin: raw.netMargin ?? null,
+    fcfMargin: raw.fcfMargin ?? null,
+    debtToEquity: raw.debtToEquity ?? null,
+  };
+
+  return Response.json({ ...metrics, ...fundamentalsScore(metrics) });
+}
