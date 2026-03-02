@@ -1,0 +1,11 @@
+generator client { provider = "prisma-client-js" }
+
+datasource db { provider = "postgresql" url = env("DATABASE_URL") }
+
+model WatchlistItem { id Int @id @default(autoincrement()) ticker String @unique createdAt DateTime @default(now()) }
+model Setting { id Int @id @default(1) posFund Int @default(70) neuFund Int @default(50) posSent Int @default(60) neuSent Int @default(40) dca382 Int @default(25) dca50 Int @default(30) dca618 Int @default(45) tp1 Int @default(25) tp2 Int @default(25) tp3 Int @default(30) atrMultiplier Float @default(0.2) percentBuffer Float @default(0.3) }
+model AlertEvent { id Int @id @default(autoincrement()) ticker String type String payload Json createdAt DateTime @default(now()) acknowledged Boolean @default(false) }
+model ManualSwing { id Int @id @default(autoincrement()) ticker String lowTime String highTime String low Float high Float createdAt DateTime @default(now()) }
+model StateTransition { id Int @id @default(autoincrement()) ticker String category String before String after String details Json createdAt DateTime @default(now()) }
+model Transaction { id Int @id @default(autoincrement()) ticker String qty Float price Float boughtAt DateTime @default(now()) }
+model CacheEntry { id Int @id @default(autoincrement()) key String @unique value Json expiresAt DateTime createdAt DateTime @default(now()) }
